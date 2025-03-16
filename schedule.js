@@ -56,9 +56,24 @@ module.exports = async function(app) {
             });
             const result = response.body;
 
-            if( !result['bustime-response'] || result['bustime-response'].error ) {
+            if( !result['bustime-response'] ) {
                 logger.error({result},`API is returning an error for ${stopid}`);
                 throw new Error(`Metro API failed ${error}`);
+            } else if( result['bustime-response'].error ) {
+                // the metro API uses "error" when the stop is valid but has
+                // no active routes traveling through it in the day
+                if( result['bustime-response'].error[0].msg === "No data found for parameter" ||
+                    result['bustime-response'].error[0].msg === "No arrival times"
+                  ) {
+                    json_result.stop.route = [];
+                    json_result.stop.msg = result['bustime-response'].error[0].msg;
+                    logger.debug(json_result,'/v1/getarrivals');
+                    res.json(json_result);
+                    return;
+                } else {
+                    logger.error({result},`API is returning an error for ${stopid}`);
+                    throw new Error(`Metro API threw an unknown error ${result['bustime-response'].error[0].msg}`);
+                }
             } else {
                 const routes = [];
                 result['bustime-response'].prd.forEach(prediction => {
@@ -73,7 +88,7 @@ module.exports = async function(app) {
                     })
                 });
                 json_result.stop.route = routes;
-                logger.debug(json_result,'/v1/getarrivals ');
+                logger.debug(json_result,'/v1/getarrivals');
                 res.json(json_result);
                 return;
             }
