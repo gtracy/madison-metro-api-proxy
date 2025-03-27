@@ -24,7 +24,7 @@
     "moment": "^2.29.2",
     "moment-timezone": "^0.5.47",
     "nodemon": "^2.0.15",
-    "pino": "^7.6.2",
+    "pino": "^9.6.0",
     "pino-http": "^6.5.0"
   }
 }
