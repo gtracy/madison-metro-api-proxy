@@ -20,6 +20,19 @@ app.use(cors({
 }));
 app.use(logger);
 
+// Middleware to extract path from event when/if calling from a naked
+// Lambda endpoint without API Gateway
+app.use((req, res, next) => {
+    console.log('********** middleware ***********');
+    if (req.apiGateway && req.apiGateway.event) {
+        console.log('extracing path from the Lambda event');
+        console.dir(req.apiGateway.event);
+        req.url = req.apiGateway.event.rawPath + (req.apiGateway.event.rawQueryString ? '?' + req.apiGateway.event.rawQueryString : '');
+        console.dir(req.url);
+    }
+    next();
+});
+  
 // API endpoint registration
 require('./schedule')(app);
 
